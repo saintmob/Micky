@@ -1,20 +1,57 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Neural-Beat Pro
 
-# Run and deploy your AI Studio app
+Neural-Beat Pro is a browser-based electronic music performance console. It combines a live step sequencer, synth-driven loops, master filtering, per-track gain, a spectrum visualizer, and a one-click drop engine into a compact DJ control surface.
 
-This contains everything you need to run your app locally.
+![Neural-Beat Pro preview](assets/neural-beat-pro-preview.png)
 
-View your app in AI Studio: https://ai.studio/apps/9cac2ec4-cc0b-4156-93e9-1782eac6863a
+## Features
+
+- Live transport with BPM sync and master output gain.
+- Four performance tracks: drums, bass, synth, and FX.
+- Two loop patterns per track with persistent local state.
+- 16-step sequencer for kick, clap, hi-hat, and bass programming.
+- Tone.js audio engine with per-track buses, master filter, analyzer, and stable envelope-triggered percussion.
+- Dedicated settings module for Chinese / English and light / dark appearance.
+- Dark control-surface UI optimized for live performance.
+
+## Tech Stack
+
+- React 19
+- Vite 6
+- TypeScript
+- Tailwind CSS 4
+- Tone.js
+- Zustand
+- Lucide React
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+Prerequisite: Node.js
 
+```bash
+npm install
+npm run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+The dev server runs at:
+
+```text
+http://localhost:3000
+```
+
+## Build And Check
+
+```bash
+npm run lint
+npm run build
+```
+
+## Environment
+
+The project keeps the original AI Studio environment shape. If Gemini-powered features are added later, copy `.env.example` to `.env.local` and set:
+
+```bash
+GEMINI_API_KEY="YOUR_KEY"
+```
+
+The current live DJ controls run locally in the browser and do not require an API key.
