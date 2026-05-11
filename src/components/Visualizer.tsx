@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { audioManager } from '../lib/audioManager';
+import { useDJStore } from '../store/djStore';
 
 export function Visualizer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const theme = useDJStore(state => state.theme);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -25,8 +27,11 @@ export function Visualizer() {
       const width = canvas.width;
       const height = canvas.height;
 
+      // Determine active theme boolean based on classlist for accuracy to react tree
+      const isDark = document.documentElement.classList.contains('dark');
+
       // Draw background with slight fade for motion blur effect
-      ctx.fillStyle = 'rgba(17, 17, 17, 0.2)'; // #111 with opacity for trail
+      ctx.fillStyle = isDark ? 'rgba(17, 17, 17, 0.2)' : 'rgba(255, 255, 255, 0.2)'; 
       ctx.fillRect(0, 0, width, height);
 
       // Get Tone.js analyzer data
@@ -66,13 +71,13 @@ export function Visualizer() {
 
       // Style waveform
       const gradient = ctx.createLinearGradient(0, height, 0, 0);
-      gradient.addColorStop(0, 'rgba(0, 243, 255, 0.1)'); // #00f3ff
+      gradient.addColorStop(0, isDark ? 'rgba(0, 243, 255, 0.1)' : 'rgba(0, 150, 255, 0.1)'); 
       gradient.addColorStop(1, 'rgba(255, 0, 85, 0.6)');  // #ff0055
       
       ctx.fillStyle = gradient;
       ctx.fill();
       
-      ctx.strokeStyle = '#00f3ff';
+      ctx.strokeStyle = isDark ? '#00f3ff' : '#0096ff';
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -82,7 +87,7 @@ export function Visualizer() {
     render();
 
     return () => cancelAnimationFrame(animationId);
-  }, []);
+  }, []); // Leaving empty is somewhat okay, but the theme variable doesn't need to trigger rebinds as `render` runs continually
 
   return (
     <>

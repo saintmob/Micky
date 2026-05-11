@@ -1,9 +1,11 @@
 import { Sparkles } from 'lucide-react';
 import { useDJStore } from '../store/djStore';
 import { audioManager } from '../lib/audioManager';
+import { useTranslation } from '../lib/i18n';
 
 export function AiButton() {
   const { isAiDropActive, triggerAiDrop, isPlaying, setTrackLoop, setFilterFreq } = useDJStore();
+  const t = useTranslation();
 
   const handleAiDrop = () => {
     if (!isPlaying) return;
@@ -43,24 +45,24 @@ export function AiButton() {
       onClick={handleAiDrop}
       disabled={!isPlaying || isAiDropActive}
       className={`flex-grow border-2 rounded-xl flex flex-col items-center justify-center p-6 transition-all group relative overflow-hidden flex-1 min-h-[140px]
-        ${!isPlaying ? 'bg-[#1a1a1a] border-[#333] cursor-not-allowed opacity-50' : ''}
-        ${isPlaying && !isAiDropActive ? 'bg-[#151619] border-[#ff0055] hover:bg-[#200a12]' : ''}
-        ${isAiDropActive ? 'bg-[#200a12] border-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.2)]' : ''}
+        ${!isPlaying ? 'bg-slate-100 dark:bg-[#1a1a1a] border-slate-300 dark:border-[#333] cursor-not-allowed opacity-50' : ''}
+        ${isPlaying && !isAiDropActive ? 'bg-white dark:bg-[#151619] border-[#ff0055] hover:bg-slate-50 dark:hover:bg-[#200a12]' : ''}
+        ${isAiDropActive ? 'bg-red-50 dark:bg-[#200a12] border-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.2)]' : ''}
       `}
     >
       <div className="absolute inset-0 bg-[#ff0055] opacity-5"></div>
       <div className={`font-mono text-[10px] mb-2 tracking-[0.3em] font-bold z-10 ${
         isAiDropActive ? 'text-[#00f3ff]' : 'text-[#ff0055]'
       }`}>
-        NEURAL ENGINE
+        {t.neuralEngine}
       </div>
       <div className={`text-3xl font-black italic z-10 transition-transform ${
-        isPlaying && !isAiDropActive ? 'text-white group-hover:scale-105' : 'text-[#8e9299]'
-      } ${isAiDropActive ? 'text-white animate-pulse' : ''}`}>
-        {isAiDropActive ? 'DROPPING...' : 'THE DROP'}
+        isPlaying && !isAiDropActive ? 'text-slate-800 dark:text-white group-hover:scale-105' : 'text-slate-400 dark:text-[#8e9299]'
+      } ${isAiDropActive ? 'text-slate-800 dark:text-white animate-pulse' : ''}`}>
+        {isAiDropActive ? t.dropping : t.theDrop}
       </div>
       <div className={`mt-4 w-12 h-1 z-10 ${
-        isPlaying && !isAiDropActive ? 'bg-[#ff0055] shadow-[0_0_10px_#ff0055]' : 'bg-[#333]'
+        isPlaying && !isAiDropActive ? 'bg-[#ff0055] shadow-[0_0_10px_#ff0055]' : 'bg-slate-300 dark:bg-[#333]'
       } ${isAiDropActive ? 'bg-[#00f3ff] shadow-[0_0_10px_#00f3ff]' : ''}`}></div>
     </button>
   );
