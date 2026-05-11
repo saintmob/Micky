@@ -3,25 +3,28 @@ import { useDJStore } from '../store/djStore';
 
 export class AudioManager {
   private inited = false;
-  private filter: Tone.Filter;
-  private analyzer: Tone.FFT;
-  private masterVolume: Tone.Volume;
+  private filter!: Tone.Filter;
+  private analyzer!: Tone.FFT;
+  private masterVolume!: Tone.Volume;
+  private trackBuses: Record<string, Tone.Volume> = {};
   
   // Track specific
   private synths: Record<string, Tone.Synth | Tone.PolySynth | Tone.MembraneSynth | Tone.NoiseSynth | Tone.MetalSynth | any> = {};
   private parts: Record<string, Tone.Part> = {};
   private customSeq: Tone.Sequence | null = null;
 
-  constructor() {
+  constructor() {}
+
+  private setupRouting() {
     this.filter = new Tone.Filter({
       type: 'lowpass',
       frequency: 20000,
       Q: 1,
     });
     this.analyzer = new Tone.FFT(64); // Provide 64 frequency bins
-    this.masterVolume = new Tone.Volume(-6);
+    this.masterVolume = new Tone.Volume(this.gainToDb(0.86));
     
-    // Routing: Synths -> Filter -> MasterVolume -> Analyzer -> Destination
+    // Routing: Track buses -> Filter -> MasterVolume -> Analyzer/Destination
     this.filter.connect(this.masterVolume);
     this.masterVolume.connect(this.analyzer);
     this.masterVolume.toDestination();
@@ -30,10 +33,20 @@ export class AudioManager {
   async initEngine() {
     if (this.inited) return;
     await Tone.start();
+    this.setupRouting();
     Tone.Transport.bpm.value = 128;
+    const state = useDJStore.getState();
+    this.masterVolume.volume.value = this.gainToDb(state.masterGain);
     this.setupInstruments();
     this.setupSequences();
     this.inited = true;
+    this.setFilter(state.filterFreq, state.filterType);
+    state.tracks.forEach(track => this.setTrackActive(track.id, track.activeLoopIndex));
+  }
+
+  setMasterGain(gain: number) {
+    if (!this.inited) return;
+    this.masterVolume.volume.rampTo(this.gainToDb(gain), 0.08);
   }
 
   setBpm(bpm: number) {
@@ -41,14 +54,9 @@ export class AudioManager {
   }
 
   setFilter(freqRatio: number, type: 'lowpass' | 'highpass') {
+    if (!this.inited) return;
     this.filter.type = type;
-    // Map ratio (0-1) to an exponential curve from 20 to 20000
-    const minFreq = 20;
-    const maxFreq = 20000;
-    const mappedFreq = Math.pow(maxFreq / minFreq, freqRatio) * minFreq;
-    // Cap just to be safe
-    const safeFreq = Math.max(20, Math.min(mappedFreq, 20000));
-    this.filter.frequency.exponentialRampTo(safeFreq, 0.1);
+    this.filter.frequency.exponentialRampTo(AudioManager.ratioToFrequency(freqRatio), 0.1);
   }
 
   start() {
@@ -70,6 +78,7 @@ export class AudioManager {
   }
 
   setTrackActive(trackId: string, loopIndex: number | null) {
+    if (!this.inited) return;
     // Stop all loops for this track
     Object.keys(this.parts).filter(k => k.startsWith(`${trackId}_`)).forEach(k => {
       this.parts[k].mute = true;
@@ -83,18 +92,46 @@ export class AudioManager {
     }
   }
 
+  setTrackVolume(trackId: string, volume: number) {
+    if (!this.inited) return;
+    const bus = this.trackBuses[trackId];
+    if (bus) {
+      bus.volume.rampTo(this.gainToDb(volume), 0.08);
+    }
+  }
+
+  static ratioToFrequency(freqRatio: number) {
+    const minFreq = 20;
+    const maxFreq = 20000;
+    return Math.max(20, Math.min(Math.pow(maxFreq / minFreq, freqRatio) * minFreq, 20000));
+  }
+
+  private gainToDb(gain: number) {
+    const safeGain = Math.max(0.0001, Math.min(gain, 1.25));
+    return Tone.gainToDb(safeGain);
+  }
+
+  private createTrackBuses() {
+    const { tracks } = useDJStore.getState();
+    tracks.forEach(track => {
+      this.trackBuses[track.id] = new Tone.Volume(this.gainToDb(track.volume)).connect(this.filter);
+    });
+  }
+
+  private bus(trackId: string) {
+    return this.trackBuses[trackId] ?? this.filter;
+  }
+
   private setupInstruments() {
+    this.createTrackBuses();
+
     // Drum
-    this.synths['kick'] = new Tone.MembraneSynth().connect(this.filter);
-    this.synths['hat'] = new Tone.MetalSynth({
-      envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
-      harmonicity: 5.1,
-      modulationIndex: 32,
-      resonance: 4000,
-      octaves: 1.5,
-      volume: -8
-    }).connect(this.filter);
-    const clapEnv = new Tone.AmplitudeEnvelope({ attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 }).connect(this.filter);
+    this.synths['kick'] = new Tone.MembraneSynth().connect(this.bus('t1'));
+    const hatEnv = new Tone.AmplitudeEnvelope({ attack: 0.001, decay: 0.055, sustain: 0, release: 0.02 }).connect(this.bus('t1'));
+    this.synths['hatNoise'] = new Tone.Noise({ type: 'white', volume: -18 }).connect(hatEnv);
+    this.synths['hatNoise'].start();
+    this.synths['hat'] = hatEnv;
+    const clapEnv = new Tone.AmplitudeEnvelope({ attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 }).connect(this.bus('t1'));
     this.synths['clapNoise'] = new Tone.Noise({ type: 'pink' }).connect(clapEnv);
     this.synths['clapNoise'].start();
     this.synths['clap'] = clapEnv; // We'll trigger envelope
@@ -106,21 +143,25 @@ export class AudioManager {
       envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
       filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2, baseFrequency: 100, octaves: 4 },
       volume: -6
-    }).connect(this.filter);
+    }).connect(this.bus('t2'));
 
     // Synth
     this.synths['poly'] = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sawtooth' },
       envelope: { attack: 0.05, decay: 0.3, sustain: 0.4, release: 1 },
       volume: -8
-    }).connect(this.filter);
+    }).connect(this.bus('t3'));
     
     // FX
     this.synths['fxNoise'] = new Tone.NoiseSynth({
       noise: { type: 'white' },
       envelope: { attack: 0.5, decay: 1, sustain: 0, release: 1 },
       volume: -10
-    }).connect(this.filter);
+    }).connect(this.bus('t4'));
+    const crashEnv = new Tone.AmplitudeEnvelope({ attack: 0.005, decay: 1.2, sustain: 0, release: 0.4 }).connect(this.bus('t4'));
+    this.synths['crashNoise'] = new Tone.Noise({ type: 'white', volume: -12 }).connect(crashEnv);
+    this.synths['crashNoise'].start();
+    this.synths['crash'] = crashEnv;
   }
 
   private setupSequences() {
@@ -225,10 +266,7 @@ export class AudioManager {
     
     // Loop 1: Crash
     this.parts['t4_1'] = new Tone.Part((time, dummy) => {
-      // simulate crash with hat tuned down
-      this.synths['hat'].triggerAttackRelease('2n', time, 1.0);
-      this.synths['hat'].frequency.setValueAtTime(500, time);
-      this.synths['hat'].frequency.rampTo(100, 1.0);
+      this.synths['crash'].triggerAttackRelease('2n', time);
     }, [
       ['0:0:0', 'sweep']
     ]).start(0);

@@ -53,27 +53,33 @@ export default function App() {
   if (!mounted) return null;
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-800 dark:text-[#e0e0e0] flex flex-col font-sans overflow-hidden transition-colors duration-300">
+    <div className="h-screen bg-[#eef1f4] text-slate-800 dark:bg-[#08090b] dark:text-[#e0e0e0] flex flex-col font-sans overflow-hidden transition-colors duration-300">
       <TopBar />
       
-      <main className="flex-1 w-full max-w-[1400px] mx-auto p-4 md:p-6 overflow-y-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-4 lg:grid-rows-6 gap-4 h-full min-h-[800px] lg:min-h-0 w-full">
+      <main className="flex-1 w-full max-w-[1480px] mx-auto p-4 md:p-6 overflow-y-auto w-full">
+        <div className="mb-4 grid grid-cols-2 gap-2 text-[10px] font-mono uppercase text-slate-500 dark:text-[#8e9299] sm:grid-cols-4">
+          <div className="status-chip">{t.systemReady}</div>
+          <div className="status-chip">{t.bufferOk}</div>
+          <div className="status-chip">{tracks.filter(track => track.activeLoopIndex !== null).length}/4 {t.armed}</div>
+          <div className="status-chip">{activeTab === 'visualizer' ? t.spectrumAnalyzer : t.patternSequencer}</div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 lg:grid-rows-6 gap-4 h-full min-h-[860px] lg:min-h-0 w-full">
           
           {/* Central Visualizer / Sequencer Area */}
-          <div className="lg:col-span-3 lg:row-span-4 bg-white dark:bg-[#111] border border-slate-200 dark:border-[#222] rounded-xl relative overflow-hidden flex flex-col transition-colors duration-300">
+          <div className="lg:col-span-3 lg:row-span-4 bg-white dark:bg-[#0e1115] border border-slate-200 dark:border-white/10 rounded-lg relative overflow-hidden flex flex-col transition-colors duration-300 shadow-[0_22px_70px_rgba(15,23,42,0.08)]">
             <div className="absolute top-4 left-4 z-20 flex gap-2 pointer-events-auto">
               <button
                 onClick={() => setActiveTab('visualizer')}
-                className={`text-[10px] font-mono px-2 py-1 backdrop-blur-md transition-colors border ${
-                  activeTab === 'visualizer' ? 'text-[#00f3ff] border-[#00f3ff]/50 bg-white/80 dark:bg-black/50' : 'text-slate-500 dark:text-[#8e9299] border-slate-300 dark:border-[#333] hover:text-slate-800 dark:hover:text-[#e0e0e0] bg-slate-100 dark:bg-[#111]'
+                className={`text-[10px] font-mono px-3 py-2 rounded-md backdrop-blur-md transition-colors border ${
+                  activeTab === 'visualizer' ? 'text-black border-[#00f3ff] bg-[#00f3ff]' : 'text-slate-500 dark:text-[#8e9299] border-slate-300 dark:border-white/10 hover:text-slate-800 dark:hover:text-white bg-slate-100/90 dark:bg-[#111820]/90'
                 }`}
               >
                 {t.spectrumAnalyzer}
               </button>
               <button
                 onClick={() => setActiveTab('sequencer')}
-                className={`text-[10px] font-mono px-2 py-1 backdrop-blur-md transition-colors border flex items-center gap-2 ${
-                  activeTab === 'sequencer' ? 'text-[#00f3ff] border-[#00f3ff]/50 bg-white/80 dark:bg-black/50' : 'text-slate-500 dark:text-[#8e9299] border-slate-300 dark:border-[#333] hover:text-slate-800 dark:hover:text-[#e0e0e0] bg-slate-100 dark:bg-[#111]'
+                className={`text-[10px] font-mono px-3 py-2 rounded-md backdrop-blur-md transition-colors border flex items-center gap-2 ${
+                  activeTab === 'sequencer' ? 'text-black border-[#00f3ff] bg-[#00f3ff]' : 'text-slate-500 dark:text-[#8e9299] border-slate-300 dark:border-white/10 hover:text-slate-800 dark:hover:text-white bg-slate-100/90 dark:bg-[#111820]/90'
                 }`}
               >
                 {t.patternSequencer}

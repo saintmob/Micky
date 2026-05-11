@@ -44,14 +44,17 @@ export function AiButton() {
     <button 
       onClick={handleAiDrop}
       disabled={!isPlaying || isAiDropActive}
-      className={`flex-grow border-2 rounded-xl flex flex-col items-center justify-center p-6 transition-all group relative overflow-hidden flex-1 min-h-[140px]
-        ${!isPlaying ? 'bg-slate-100 dark:bg-[#1a1a1a] border-slate-300 dark:border-[#333] cursor-not-allowed opacity-50' : ''}
-        ${isPlaying && !isAiDropActive ? 'bg-white dark:bg-[#151619] border-[#ff0055] hover:bg-slate-50 dark:hover:bg-[#200a12]' : ''}
-        ${isAiDropActive ? 'bg-red-50 dark:bg-[#200a12] border-[#00f3ff] shadow-[0_0_20px_rgba(0,243,255,0.2)]' : ''}
+      className={`flex-grow border rounded-lg flex flex-col items-center justify-center p-6 transition-all group relative overflow-hidden flex-1 min-h-[140px]
+        ${!isPlaying ? 'bg-slate-100 dark:bg-[#12161b] border-slate-300 dark:border-white/10 cursor-not-allowed opacity-55' : ''}
+        ${isPlaying && !isAiDropActive ? 'bg-white dark:bg-[#15191d] border-[#ff2f6d] hover:bg-[#fff6f9] dark:hover:bg-[#240b15] shadow-[0_18px_44px_rgba(255,47,109,0.13)]' : ''}
+        ${isAiDropActive ? 'bg-red-50 dark:bg-[#240b15] border-[#00f3ff] shadow-[0_0_26px_rgba(0,243,255,0.22)]' : ''}
       `}
     >
-      <div className="absolute inset-0 bg-[#ff0055] opacity-5"></div>
-      <div className={`font-mono text-[10px] mb-2 tracking-[0.3em] font-bold z-10 ${
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,47,109,0.18),transparent_55%)]"></div>
+      <Sparkles className={`z-10 mb-3 h-5 w-5 ${
+        isAiDropActive ? 'text-[#00f3ff]' : 'text-[#ff2f6d]'
+      }`} />
+      <div className={`font-mono text-[10px] mb-2 tracking-[0.24em] font-bold z-10 ${
         isAiDropActive ? 'text-[#00f3ff]' : 'text-[#ff0055]'
       }`}>
         {t.neuralEngine}

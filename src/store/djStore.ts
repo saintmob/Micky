@@ -15,6 +15,7 @@ export type Language = 'en' | 'zh' | 'system';
 interface DJState {
   isPlaying: boolean;
   bpm: number;
+  masterGain: number;
   filterFreq: number; // 0 to 1, mapped to 20-20000 exponentially
   filterType: 'lowpass' | 'highpass';
   isAiDropActive: boolean;
@@ -28,9 +29,11 @@ interface DJState {
   language: Language;
   togglePlay: () => void;
   setBpm: (bpm: number) => void;
+  setMasterGain: (gain: number) => void;
   setFilterFreq: (freq: number) => void;
   setFilterType: (type: 'lowpass' | 'highpass') => void;
   setTrackLoop: (trackId: string, loopIndex: number | null) => void;
+  setTrackVolume: (trackId: string, volume: number) => void;
   triggerAiDrop: () => void;
   setAnalyzerData: (data: Uint8Array) => void;
   setIsAiDropActive: (isActive: boolean) => void;
@@ -47,6 +50,7 @@ export const useDJStore = create<DJState>()(
     (set, get) => ({
       isPlaying: false,
       bpm: 128,
+      masterGain: 0.86,
       filterFreq: 1.0, // 1.0 = fully open (Lowpass)
       filterType: 'lowpass',
       isAiDropActive: false,
@@ -63,15 +67,17 @@ export const useDJStore = create<DJState>()(
       theme: 'system',
       language: 'system',
       tracks: [
-        { id: 't1', name: 'Drums', type: 'Drum', activeLoopIndex: null, volume: 1 },
-        { id: 't2', name: 'Bass', type: 'Bass', activeLoopIndex: null, volume: 1 },
-        { id: 't3', name: 'Synth', type: 'Synth', activeLoopIndex: null, volume: 1 },
-        { id: 't4', name: 'FX', type: 'FX', activeLoopIndex: null, volume: 1 },
+        { id: 't1', name: 'Drums', type: 'Drum', activeLoopIndex: null, volume: 0.92 },
+        { id: 't2', name: 'Bass', type: 'Bass', activeLoopIndex: null, volume: 0.86 },
+        { id: 't3', name: 'Synth', type: 'Synth', activeLoopIndex: null, volume: 0.78 },
+        { id: 't4', name: 'FX', type: 'FX', activeLoopIndex: null, volume: 0.72 },
       ],
 
       togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
       
       setBpm: (bpm) => set({ bpm }),
+
+      setMasterGain: (masterGain) => set({ masterGain }),
       
       setFilterFreq: (freq) => set({ filterFreq: freq }),
       
@@ -83,6 +89,12 @@ export const useDJStore = create<DJState>()(
       setTrackLoop: (trackId, loopIndex) => set((state) => ({
         tracks: state.tracks.map(t => 
           t.id === trackId ? { ...t, activeLoopIndex: loopIndex } : t
+        )
+      })),
+
+      setTrackVolume: (trackId, volume) => set((state) => ({
+        tracks: state.tracks.map(t =>
+          t.id === trackId ? { ...t, volume } : t
         )
       })),
 
@@ -115,8 +127,16 @@ export const useDJStore = create<DJState>()(
       name: 'neural-beat-storage',
       partialize: (state) => ({ 
         bpm: state.bpm, 
+        masterGain: state.masterGain,
         filterFreq: state.filterFreq, 
         filterType: state.filterType, 
+        tracks: state.tracks.map(({ id, name, type, activeLoopIndex, volume }) => ({
+          id,
+          name,
+          type,
+          activeLoopIndex,
+          volume,
+        })),
         seqMatrix: state.seqMatrix,
         theme: state.theme,
         language: state.language

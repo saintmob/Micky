@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDJStore } from '../store/djStore';
-import { audioManager } from '../lib/audioManager';
+import { AudioManager, audioManager } from '../lib/audioManager';
 import { useTranslation } from '../lib/i18n';
 
 export function FilterControl() {
@@ -19,22 +19,28 @@ export function FilterControl() {
     audioManager.setFilter(filterType === 'lowpass' ? 1.0 : 0.0, nextType); 
   };
 
+  const frequency = AudioManager.ratioToFrequency(filterFreq);
+  const frequencyLabel = frequency >= 1000 ? `${(frequency / 1000).toFixed(1)} kHz` : `${Math.round(frequency)} Hz`;
+
   return (
-    <div className="h-48 bg-white dark:bg-[#151619] border border-slate-200 dark:border-[#222] rounded-xl p-4 flex flex-col justify-between shrink-0 transition-colors duration-300">
+    <div className="h-48 bg-white/88 dark:bg-[#15191d] border border-slate-200 dark:border-white/10 rounded-lg p-4 flex flex-col justify-between shrink-0 transition-colors duration-300">
       <div className="flex justify-between items-start">
-        <span className="text-[10px] font-mono text-slate-400 dark:text-[#8e9299] uppercase tracking-widest">{t.masterFilter}</span>
+        <div>
+          <span className="text-[10px] font-mono text-slate-400 dark:text-[#8e9299] uppercase tracking-widest">{t.masterFilter}</span>
+          <div className="mt-1 text-xl font-black text-slate-900 dark:text-white">{frequencyLabel}</div>
+        </div>
         <button 
           onClick={toggleType}
-          className="text-[10px] font-mono font-bold px-2 py-1 bg-slate-100 dark:bg-[#222] border border-slate-200 dark:border-[#333] text-slate-800 dark:text-[#e0e0e0] rounded hover:bg-slate-200 dark:hover:bg-[#333] transition-colors"
+          className="text-[10px] font-mono font-bold px-2 py-1 bg-slate-100 dark:bg-[#222832] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-md hover:border-[#00f3ff]/60 transition-colors"
         >
           {filterType === 'lowpass' ? t.lpf : t.hpf}
         </button>
       </div>
       
       <div className="flex-grow flex flex-col justify-center px-2">
-        <div className="relative h-1 bg-slate-200 dark:bg-[#333] rounded-full w-full mb-4">
+        <div className="relative h-1.5 bg-slate-200 dark:bg-white/10 rounded-full w-full mb-4">
           <div 
-            className="absolute top-0 left-0 h-full bg-[#00f3ff] rounded-full"
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#40ff8f] via-[#00f3ff] to-[#ff2f6d] rounded-full"
             style={{ width: `${filterFreq * 100}%` }}
           ></div>
           <input 
@@ -47,7 +53,7 @@ export function FilterControl() {
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div 
-            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-[#00f3ff] rounded-sm pointer-events-none shadow-[0_0_10px_#00f3ff]"
+            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#00f3ff] rounded pointer-events-none shadow-[0_0_10px_#00f3ff] dark:bg-[#08090b]"
             style={{ left: `calc(${filterFreq * 100}% - 8px)` }}
           ></div>
         </div>

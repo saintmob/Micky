@@ -2,10 +2,10 @@ import React from 'react';
 import { useDJStore } from '../store/djStore';
 import { audioManager } from '../lib/audioManager';
 import { useTranslation } from '../lib/i18n';
-import { Globe, Moon, Sun, Monitor } from 'lucide-react';
+import { Globe, Moon, Sun, Monitor, Play, Square, Volume2 } from 'lucide-react';
 
 export function TopBar() {
-  const { isPlaying, togglePlay, bpm, setBpm, theme, setTheme, language, setLanguage } = useDJStore();
+  const { isPlaying, togglePlay, bpm, setBpm, masterGain, setMasterGain, theme, setTheme, language, setLanguage } = useDJStore();
   const t = useTranslation();
 
   const handlePlayToggle = async () => {
@@ -26,6 +26,12 @@ export function TopBar() {
     }
   };
 
+  const handleMasterGainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setMasterGain(val);
+    audioManager.setMasterGain(val);
+  };
+
   const cycleTheme = () => {
     if (theme === 'system') setTheme('light');
     else if (theme === 'light') setTheme('dark');
@@ -39,12 +45,19 @@ export function TopBar() {
   };
 
   return (
-    <header className="flex flex-wrap items-center justify-between mx-4 md:mx-6 mt-4 pb-4 border-b border-slate-200 dark:border-[#222] shrink-0 gap-4 transition-colors duration-300">
+    <header className="mx-4 md:mx-6 mt-4 pb-4 border-b border-slate-200/80 dark:border-white/10 shrink-0 transition-colors duration-300">
+      <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <div className="bg-[#00f3ff] w-8 h-8 rounded-sm flex items-center justify-center shrink-0">
-          <div className="w-4 h-4 bg-white dark:bg-black rotate-45 transition-colors duration-300"></div>
+        <div className="bg-[#00f3ff] w-9 h-9 rounded-md flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(0,243,255,0.25)]">
+          <div className="w-4 h-4 bg-white dark:bg-[#08090b] rotate-45 transition-colors duration-300"></div>
         </div>
-        <h1 className="text-xl font-bold tracking-tighter uppercase text-slate-800 dark:text-[#e0e0e0]">NEURAL-BEAT <span className="text-[#00f3ff] font-mono text-sm opacity-60 ml-2 hidden sm:inline">V1.0.4</span></h1>
+        <div>
+          <h1 className="text-xl font-black uppercase text-slate-900 dark:text-white">NEURAL-BEAT <span className="text-[#00f3ff] font-mono text-sm opacity-70 ml-2 hidden sm:inline">PRO 1.1</span></h1>
+          <div className="mt-1 flex items-center gap-2 text-[10px] font-mono uppercase text-slate-500 dark:text-[#8e9299]">
+            <span className={`h-1.5 w-1.5 rounded-full ${isPlaying ? 'bg-[#40ff8f] shadow-[0_0_8px_#40ff8f]' : 'bg-slate-400 dark:bg-[#555]'}`} />
+            {isPlaying ? t.armed : t.deckReady}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 md:gap-8 flex-wrap">
@@ -81,18 +94,31 @@ export function TopBar() {
             <span className="text-xs text-[#00f3ff] opacity-50 font-mono mt-1">{t.bpm}</span>
           </div>
         </div>
+        <div className="hidden sm:flex min-w-36 flex-col gap-2">
+          <div className="flex items-center justify-between text-[10px] font-mono uppercase text-slate-400 dark:text-[#8e9299]">
+            <span className="flex items-center gap-1.5"><Volume2 className="h-3 w-3" />{t.masterOut}</span>
+            <span>{Math.round(masterGain * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1.1"
+            step="0.01"
+            value={masterGain}
+            onChange={handleMasterGainChange}
+            className="pro-range"
+          />
+        </div>
         <div className="flex gap-2">
           <button 
             onClick={handlePlayToggle}
-            className="w-12 h-10 bg-slate-100 dark:bg-[#151619] border border-slate-300 dark:border-[#333] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-[#222] transition-colors"
+            className={`h-11 w-12 rounded-md border flex items-center justify-center transition-all ${isPlaying ? 'border-[#ff2f6d] bg-[#ff2f6d] text-white shadow-[0_0_18px_rgba(255,47,109,0.35)]' : 'border-slate-300 bg-white text-[#00a8c5] hover:border-[#00f3ff] dark:border-white/10 dark:bg-[#151619]'}`}
+            title={isPlaying ? t.stop : 'Play'}
           >
-            {isPlaying ? (
-              <div className="w-4 h-4 bg-[#ff0055]"></div>
-            ) : (
-              <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[12px] border-l-[#00f3ff] border-b-[8px] border-b-transparent ml-1"></div>
-            )}
+            {isPlaying ? <Square className="h-4 w-4 fill-current" /> : <Play className="h-4 w-4 fill-current" />}
           </button>
         </div>
+      </div>
       </div>
     </header>
   );
