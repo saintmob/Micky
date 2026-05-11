@@ -2,11 +2,32 @@ import React from 'react';
 import { useDJStore } from '../store/djStore';
 import { audioManager } from '../lib/audioManager';
 import { useTranslation } from '../lib/i18n';
-import { Globe, Moon, Sun, Monitor, Play, Square, Volume2 } from 'lucide-react';
+import { Languages, Moon, Play, Settings, Square, Sun, Volume2 } from 'lucide-react';
 
 export function TopBar() {
   const { isPlaying, togglePlay, bpm, setBpm, masterGain, setMasterGain, theme, setTheme, language, setLanguage } = useDJStore();
   const t = useTranslation();
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const settingsRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const closeSettings = (event: MouseEvent) => {
+      if (!settingsRef.current?.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', closeSettings);
+    return () => document.removeEventListener('mousedown', closeSettings);
+  }, []);
+
+  const resolvedLanguage = language === 'system'
+    ? (typeof navigator !== 'undefined' && navigator.language.startsWith('zh') ? 'zh' : 'en')
+    : language;
+
+  const resolvedTheme = theme === 'system'
+    ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
 
   const handlePlayToggle = async () => {
     if (!isPlaying) {
@@ -32,18 +53,6 @@ export function TopBar() {
     audioManager.setMasterGain(val);
   };
 
-  const cycleTheme = () => {
-    if (theme === 'system') setTheme('light');
-    else if (theme === 'light') setTheme('dark');
-    else setTheme('system');
-  };
-
-  const cycleLanguage = () => {
-    if (language === 'system') setLanguage('en');
-    else if (language === 'en') setLanguage('zh');
-    else setLanguage('system');
-  };
-
   return (
     <header className="mx-4 md:mx-6 mt-4 pb-4 border-b border-slate-200/80 dark:border-white/10 shrink-0 transition-colors duration-300">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -61,23 +70,72 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4 md:gap-8 flex-wrap">
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2" ref={settingsRef}>
           <button 
-            onClick={cycleLanguage} 
-            className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-[#8e9299] dark:hover:text-[#e0e0e0] transition-colors relative group"
-            title="Toggle Language"
+            onClick={() => setIsSettingsOpen(open => !open)}
+            className={`h-11 w-11 rounded-md border flex items-center justify-center transition-all ${
+              isSettingsOpen
+                ? 'border-[#00f3ff] bg-[#00f3ff] text-black shadow-[0_0_18px_rgba(0,243,255,0.28)]'
+                : 'border-slate-300 bg-white text-slate-600 hover:border-[#00f3ff] hover:text-slate-900 dark:border-white/10 dark:bg-[#151619] dark:text-[#8e9299] dark:hover:text-white'
+            }`}
+            title={t.settings}
+            aria-expanded={isSettingsOpen}
+            aria-label={t.settings}
           >
-            <Globe className="w-4 h-4" />
-            <span className="absolute -bottom-1 -right-1 text-[8px] font-mono font-bold bg-slate-200 dark:bg-[#333] px-1 rounded">{language === 'system' ? 'SYS' : language.toUpperCase()}</span>
+            <Settings className="h-4 w-4" />
           </button>
-          
-          <button 
-            onClick={cycleTheme} 
-            className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-[#8e9299] dark:hover:text-[#e0e0e0] transition-colors"
-            title="Toggle Theme"
-          >
-            {theme === 'light' ? <Sun className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
-          </button>
+
+          {isSettingsOpen && (
+            <div className="absolute right-0 top-14 z-50 w-64 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#111820]/95">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm font-black text-slate-900 dark:text-white">{t.settings}</div>
+                <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase text-slate-400 dark:text-[#8e9299]">
+                  <Languages className="h-3.5 w-3.5" />
+                  {resolvedLanguage === 'zh' ? '中文' : 'En'}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="mb-2 text-[10px] font-mono uppercase text-slate-400 dark:text-[#8e9299]">{t.language}</div>
+                  <div className="grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1 dark:bg-[#0b0f14]">
+                    <button
+                      onClick={() => setLanguage('zh')}
+                      className={`h-9 rounded text-xs font-bold transition-colors ${resolvedLanguage === 'zh' ? 'bg-white text-slate-950 shadow-sm dark:bg-[#1f2a34] dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#8e9299] dark:hover:text-white'}`}
+                    >
+                      中文
+                    </button>
+                    <button
+                      onClick={() => setLanguage('en')}
+                      className={`h-9 rounded text-xs font-bold transition-colors ${resolvedLanguage === 'en' ? 'bg-white text-slate-950 shadow-sm dark:bg-[#1f2a34] dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#8e9299] dark:hover:text-white'}`}
+                    >
+                      En
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-2 text-[10px] font-mono uppercase text-slate-400 dark:text-[#8e9299]">{t.appearance}</div>
+                  <div className="grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1 dark:bg-[#0b0f14]">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`flex h-9 items-center justify-center gap-2 rounded text-xs font-bold transition-colors ${resolvedTheme === 'light' ? 'bg-white text-slate-950 shadow-sm dark:bg-[#1f2a34] dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#8e9299] dark:hover:text-white'}`}
+                    >
+                      <Sun className="h-3.5 w-3.5" />
+                      {t.light}
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`flex h-9 items-center justify-center gap-2 rounded text-xs font-bold transition-colors ${resolvedTheme === 'dark' ? 'bg-white text-slate-950 shadow-sm dark:bg-[#1f2a34] dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-[#8e9299] dark:hover:text-white'}`}
+                    >
+                      <Moon className="h-3.5 w-3.5" />
+                      {t.dark}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col items-end">
